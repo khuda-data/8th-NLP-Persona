@@ -1,25 +1,19 @@
-# 1. 보안 (API 키 유출 방지 - 가장 중요)
 .env
 secrets.json
 
-# 2. 대용량 데이터 파일 (GitHub 100MB 제한 초과 방지)
-# 원본 데이터는 올리지 않고 코드만 올리는 것이 원칙입니다.
 Cyberpunk_2077_Steam_Reviews.csv
 Cyberpunk_2077_Steam_Reviews.xlsx
 cyberpunk_reviews.zip
 
-# 3. 시스템 로그 및 Slurm 출력 파일
 logs/
 *.out
 *.err
 
-# 4. 파이썬 및 주피터 노트북 캐시
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 .DS_Store
 
-# 5. 가상환경 폴더 (혹시 프로젝트 내부에 만들었을 경우)
 venv/
 env/
 prompt_lab/

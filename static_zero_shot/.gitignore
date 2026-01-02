@@ -1,13 +1,10 @@
-# 1. 보안 파일 (절대 올리면 안 됨)
 .env
 secrets.json
 
-# 2. 로그 및 잡동사니
 logs/
 *.out
 *.err
 
-# 3. 파이썬 캐시 (지저분함)
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
