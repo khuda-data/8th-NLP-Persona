@@ -17,3 +17,6 @@ __pycache__/
 venv/
 env/
 prompt_lab/
+
+datasets/chroma_db/
+datasets/reviews/
