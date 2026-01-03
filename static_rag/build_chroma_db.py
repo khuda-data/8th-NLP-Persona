@@ -11,13 +11,7 @@ import torch
 CSV_PATH = os.path.join("datasets", "reviews", "Cyberpunk_2077_Steam_Reviews.csv")
 DB_PATH = os.path.join("datasets", "chroma_db")
 COLLECTION_NAME = "cyberpunk2077_reviews"
-# Local Model Path (Relative to project root or absolute)
-# User specified: models/Qwen3-Embedding-8B inside the directory where script runs?
-# "Run execution... models subdir exists in that path... models/Qwen3-Embedding-8B"
-# Assuming running from project root, and models is in project root or static_rag/models?
-# User said: "This script's path has models subdirectory".
-# So `static_rag/models/Qwen3-Embedding-8B`.
-MODEL_PATH = os.path.join("static_rag", "models", "Qwen3-Embedding-8B")
+MODEL_PATH = os.path.join("models", "Qwen3-Embedding-8B")
 MODEL_NAME = "Qwen3-Embedding-8B" # For metadata or fallback
 
 def process_reviews(csv_path):
