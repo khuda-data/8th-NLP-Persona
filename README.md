@@ -14,6 +14,8 @@
 ├── 📜 analyze_ground_truth_stock.py # [공통] Ground Truth 생성 (Stock)
 │
 ├── 📁 datasets/                     # [Data] 데이터셋 저장소
+│   ├── generate_simulation_dates.py # 시뮬레이션 날짜 생성 스크립트
+│   ├── simulation_dates.csv         # (자동 생성) 시뮬레이션 날짜 목록
 │   ├── ground_truth_steam.csv       # (자동 생성) Steam 정답지
 │   ├── ground_truth_stock.csv       # (자동 생성) 주가 정답지
 │   └── Cyberpunk_2077_Steam_Reviews.csv # 원본 리뷰 데이터
@@ -21,14 +23,18 @@
 ├── 📁 png/                          # [Image] 결과 그래프 저장소
 │
 ├── 📁 utils/                        # [Module] 공통 유틸리티
-│   └── persona_generator.py         # 페르소나 생성기 (Team 1, 2, 3 공용)
+│   ├── persona_generator.py         # 페르소나 생성기 (Team 1, 2, 3 공용)
+│   └── search_queries.py            # [NEW] 게이머 유형별 검색 쿼리 모듈 (Team 2, 3 공용)
 │
 ├── 📁 static_zero_shot/             # [Team 1] 작업 공간
 │   ├── simulation_model_a.py        # 팀 1 시뮬레이션 코드
 │   └── Team1_Static_ZeroShot_Results.csv # 팀 1 결과
 │
 ├── 📁 static_rag/                   # [Team 2] 작업 공간
-│   ├── simulation_model_b.py        # 팀 2 시뮬레이션 코드
+│   ├── build_chroma_db.py           # ChromaDB 구축 스크립트
+│   ├── rag_modules.py               # RAG 검색 모듈 (Static Logic)
+│   ├── simulation_model_b.py        # 팀 2 시뮬레이션 코드 (Aligned with Team 3)
+│   ├── README.md                    # 팀 2 상세 설명
 │   └── Team2_StaticRAG_Results.csv  # 팀 2 결과
 │
 └── 📁 time_aware_rag/               # [Team 3] 작업 공간
