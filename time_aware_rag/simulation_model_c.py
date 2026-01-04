@@ -4,7 +4,6 @@ import json
 import pandas as pd
 import random
 from openai import OpenAI
-from dotenv import load_dotenv
 
 # 프로젝트 루트 경로 추가
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,36 +12,14 @@ sys.path.append(parent_dir)
 
 from utils.persona_generator import generate_balanced_personas, Persona
 from utils.search_queries import GAMER_TYPE_QUERIES, GENERAL_QUERY
-from static_rag.rag_modules import RAGRetriever
+from utils.llm_config import get_llm_client, TEMPERATURE
+from time_aware_rag.rag_modules import RAGRetriever
 
-# 1. API키 및 환경 설정 (LLM Configuration)
-# load_dotenv()
+# 1. LLM 클라이언트 초기화 (공통 모듈 사용)
+client, MODEL_NAME = get_llm_client()
+print(f"✅ Using model: {MODEL_NAME} (Team 3)")
 
-# --- LLM 설정 (Configuration) ---
-USE_OLLAMA = False # Local LLM 사용 여부
-OLLAMA_BASE_URL = "http://localhost:11434/v1"
-OLLAMA_MODEL = "qwen3:4b"
-OPENAI_MODEL = "gpt-4o-mini"
-
-if USE_OLLAMA:
-    print(f"🔹 Using Local LLM (Ollama): {OLLAMA_MODEL}")
-    client = OpenAI(
-        base_url=OLLAMA_BASE_URL,
-        api_key="ollama" # Ollama는 api_key가 필요 없지만 클라이언트 호환성을 위해 더미 값 입력
-    )
-    MODEL_NAME = OLLAMA_MODEL
-else:
-    print(f"🔸 Using OpenAI API: {OPENAI_MODEL}")
-    # api_key = os.getenv("OPENAI_API_KEY")
-    # if not api_key:
-    #    print("Warning: OPENAI_API_KEY not found in .env")
-    #    pass 
-    api_key = input("Enter your OpenAI API key: ")
-    client = OpenAI(api_key=api_key)
-    MODEL_NAME = OPENAI_MODEL
-# -------------------------------
-
-OUTPUT_FILE = "time_aware_rag/Team3_TimeAwareRag_Results.csv"
+OUTPUT_FILE = "time_aware_rag/Team3_TimeAware_Results_Final.csv"
 SIMULATION_DATES_FILE = "datasets/simulation_dates.csv"
 
 # =============================================================================
@@ -86,7 +63,7 @@ def call_llm(prompt: str) -> dict:
             model=MODEL_NAME, 
             messages=[{"role": "system", "content": prompt}],
             response_format={"type": "json_object"},
-            temperature=0.5
+            temperature=TEMPERATURE
         )
         return json.loads(res.choices[0].message.content)
     except Exception as e:
@@ -135,22 +112,26 @@ def run_experiment_b_rag(n_per_type: int = 13):
                 selected_queries = agent_queries # Fallback
             selected_queries.append(GENERAL_QUERY)
             
-            # 2. 검색 (Team 2 정적 로직)
-            # 쿼리당 상위 k개를 검색하고 합침
-            # Team 3는 쿼리당 100개를 검색 후 시간 감쇠(Time-Decay) 랭킹을 적용하지만,
-            # Team 2는 유사도(Similarity) 기반 상위 k개를 검색
+            # 2. 검색 (Team 3 Time-Aware 로직)
+            # 쿼리당 100개를 검색 후 시간 감쇠(Time-Decay) 랭킹을 적용
+            # Team 2와의 차이: similarity × time_factor로 재랭킹
             
-            candidates = []
-            for query in selected_queries:
-                # retrieve_reviews 함수는 "- [Date] text..." 형식을 반환
-                reviews = retriever.retrieve_reviews(query, date_str, top_k=2)
-                candidates.extend(reviews)
+            # Persona 객체에 search_queries 속성 추가 (rag_modules.py 호환)
+            # 노트북의 ChromaEnsembleRetriever.retrieve_weighted() 로직과 동일
+            class PersonaWithQueries:
+                def __init__(self, persona, queries):
+                    self.search_queries = queries
             
-            # 중복 제거 (단순 집합 사용)
-            unique_candidates = list(set(candidates))
+            persona_with_queries = PersonaWithQueries(persona, selected_queries)
             
-            # 상위 5개 선택 (Team 3와 동일 개수)
-            final_docs = unique_candidates[:5]
+            # Time-Aware RAG 검색 (similarity × time_factor)
+            # 노트북의 retrieve_weighted() 메서드와 동일한 로직
+            final_docs = retriever.retrieve_reviews(
+                persona_with_queries,
+                current_date_str=date_str,
+                top_k_final=5,
+                decay_rate=0.01  # Half-life ≈ 70일
+            )
             
             # 3. 프롬프트 생성
             prompt = create_prompt(persona, date_str, final_docs)

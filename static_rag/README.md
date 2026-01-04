@@ -6,7 +6,7 @@ Team 3 (Time-Aware)와의 변인 통제를 위해 **공통 프롬프트, 공통 
 ## 🛠️ 주요 구성 파일
 
 ### 1. `build_chroma_db.py`
-*   **기능**: 원본 리뷰 데이터(`datasets/reviews/Cyberpunk_2077_Steam_Reviews.csv`)를 읽어 ChromaDB를 구축합니다.
+*   **기능**: 원본 리뷰 데이터(`datasets/Cyberpunk_2077_Steam_Reviews.csv`)를 읽어 ChromaDB를 구축합니다.
 *   **특징**:
     *   날짜를 정수형(`YYYYMMDD`)으로 변환하여 저장 (날짜 필터링 속도 최적화).
     *   임베딩 모델: `all-MiniLM-L6-v2` (SentenceTransformer).

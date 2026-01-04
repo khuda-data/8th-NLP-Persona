@@ -1,0 +1,10 @@
+# OpenAI API Key
+# Get your API key from: https://platform.openai.com/api-keys
+# Copy this file to .env and replace the value below
+OPENAI_API_KEY=sk-proj-your-api-key-here
+
+# Optional: For local LLM (Ollama)
+# Uncomment and modify utils/llm_config.py to use Ollama
+# OLLAMA_BASE_URL=http://localhost:11434/v1
+# OLLAMA_MODEL=qwen3:4b
+
