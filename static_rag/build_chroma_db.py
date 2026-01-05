@@ -5,10 +5,14 @@ from datetime import datetime
 import os
 import argparse
 import sys
-import torch
+# torch는 로컬 모델 사용 시에만 필요 (조건부 import)
+try:
+    import torch
+except ImportError:
+    torch = None
 
 # 설정 (Configuration)
-CSV_PATH = os.path.join("datasets", "reviews", "Cyberpunk_2077_Steam_Reviews.csv")
+CSV_PATH = os.path.join("datasets", "Cyberpunk_2077_Steam_Reviews.csv")
 DB_PATH = os.path.join("datasets", "chroma_db")
 COLLECTION_NAME = "cyberpunk2077_reviews"
 # Local Model Path (Relative to project root or absolute)
@@ -77,7 +81,11 @@ class CustomEmbeddingFunction(embedding_functions.EmbeddingFunction):
         
         print(f"Loading embedding model from: {model_path}")
         # trust_remote_code=True might be needed for some Qwen models
-        self.model = SentenceTransformer(model_path, trust_remote_code=True, device="cuda" if torch.cuda.is_available() else "cpu")
+        if torch and torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+        self.model = SentenceTransformer(model_path, trust_remote_code=True, device=device)
 
     def __call__(self, input: list) -> list:
         # Generate embeddings
@@ -89,8 +97,7 @@ def build_chroma_db(test_mode=False):
     client = chromadb.PersistentClient(path=DB_PATH)
     
     # 임베딩 함수 설정 (Local Qwen Model)
-    import torch # Ensure torch is imported for device check
-    
+    # torch는 로컬 모델 사용 시에만 필요
     if os.path.exists(MODEL_PATH):
         print(f"Found local model at {MODEL_PATH}, using CustomEmbeddingFunction.")
         ef = CustomEmbeddingFunction(model_path=MODEL_PATH)
@@ -120,7 +127,17 @@ def build_chroma_db(test_mode=False):
     metadatas = []
     ids = []
     
-    print("Starting ingestion...")
+    print(f"\n{'='*60}")
+    print(f"🚀 ChromaDB 구축 시작")
+    print(f"{'='*60}")
+    print(f"📊 총 리뷰 수: {total_docs:,}개")
+    print(f"📦 배치 크기: {batch_size}개")
+    print(f"💾 DB 경로: {DB_PATH}")
+    print(f"📚 컬렉션명: {COLLECTION_NAME}")
+    print(f"{'='*60}\n")
+    
+    skipped_count = 0
+    processed_count = 0
     
     for i, (idx, row) in enumerate(df.iterrows()):
         review_text = row['Review']
@@ -130,6 +147,9 @@ def build_chroma_db(test_mode=False):
         date_int = parse_date_to_int(date_val)
         if not date_int:
             # 날짜 파싱 실패 시 건너뜀
+            skipped_count += 1
+            if skipped_count <= 5:
+                print(f"⚠️  날짜 파싱 실패 (건너뜀): Date='{date_val}' (행 {i+1})")
             continue
             
         # 메타데이터 구성
@@ -162,7 +182,10 @@ def build_chroma_db(test_mode=False):
         metadatas.append(metadata)
         ids.append(doc_id)
         
+        processed_count += 1
+        
         if len(documents) >= batch_size:
+            print(f"📥 배치 저장 중... ({processed_count:,}/{total_docs:,} 처리됨, {len(documents)}개 문서 추가)")
             collection.add(
                 documents=documents,
                 metadatas=metadatas,
@@ -171,16 +194,25 @@ def build_chroma_db(test_mode=False):
             documents = []
             metadatas = []
             ids = []
-            print(f"Processed {i + 1}/{total_docs} reviews...", end='\r')
+            print(f"✅ 저장 완료! 현재 컬렉션 문서 수: {collection.count():,}개\n")
             
     if documents:
+        print(f"📥 마지막 배치 저장 중... ({len(documents)}개 문서)")
         collection.add(
             documents=documents,
             metadatas=metadatas,
             ids=ids
         )
     
-    print(f"\nIngestion complete. Total documents in collection: {collection.count()}")
+    print(f"\n{'='*60}")
+    print(f"✅ ChromaDB 구축 완료!")
+    print(f"{'='*60}")
+    print(f"📊 처리 통계:")
+    print(f"   - 총 리뷰 수: {total_docs:,}개")
+    print(f"   - 성공적으로 처리: {processed_count:,}개")
+    print(f"   - 건너뛴 리뷰 (날짜 파싱 실패): {skipped_count:,}개")
+    print(f"   - 최종 저장된 문서 수: {collection.count():,}개")
+    print(f"{'='*60}\n")
 
     if test_mode:
         verify_insertion(collection)

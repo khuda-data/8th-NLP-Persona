@@ -16,10 +16,18 @@ __pycache__/
 
 venv/
 env/
+.venv/
 prompt_lab/
+archive/
+*.log
+team*_run.log
+team*_async.log
+team*_experiment.log
+experiment.log
 
 datasets/chroma_db/
 datasets/reviews/
+datasets/chroma_db_backup_*/
 
 models/
 

@@ -1,0 +1,23 @@
+# Core dependencies
+pandas>=2.0.0
+numpy>=1.24.0,<2.0.0  # NumPy 2.x는 PyTorch와 호환성 문제가 있음
+openai>=1.0.0
+python-dotenv>=1.0.0
+
+# Vector database
+chromadb>=0.4.0
+
+# Embedding models
+sentence-transformers>=2.2.0
+
+# Data visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Statistics
+scipy>=1.10.0
+
+# Optional: PyTorch (for custom embedding models)
+# Uncomment if using custom embedding models
+# torch>=2.0.0
+

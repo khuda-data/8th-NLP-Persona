@@ -5,7 +5,11 @@ from datetime import datetime
 import os
 import argparse
 import sys
-import torch
+# torch는 로컬 모델 사용 시에만 필요 (조건부 import)
+try:
+    import torch
+except ImportError:
+    torch = None
 
 # 설정 (Configuration)
 CSV_PATH = os.path.join("datasets", "Cyberpunk_2077_Steam_Reviews.csv")
@@ -77,7 +81,11 @@ class CustomEmbeddingFunction(embedding_functions.EmbeddingFunction):
         
         print(f"Loading embedding model from: {model_path}")
         # trust_remote_code=True might be needed for some Qwen models
-        self.model = SentenceTransformer(model_path, trust_remote_code=True, device="cuda" if torch.cuda.is_available() else "cpu")
+        if torch and torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
+        self.model = SentenceTransformer(model_path, trust_remote_code=True, device=device)
 
     def __call__(self, input: list) -> list:
         # Generate embeddings
@@ -89,8 +97,7 @@ def build_chroma_db(test_mode=False):
     client = chromadb.PersistentClient(path=DB_PATH)
     
     # 임베딩 함수 설정 (Local Qwen Model)
-    import torch # Ensure torch is imported for device check
-    
+    # torch는 로컬 모델 사용 시에만 필요
     if os.path.exists(MODEL_PATH):
         print(f"Found local model at {MODEL_PATH}, using CustomEmbeddingFunction.")
         ef = CustomEmbeddingFunction(model_path=MODEL_PATH)

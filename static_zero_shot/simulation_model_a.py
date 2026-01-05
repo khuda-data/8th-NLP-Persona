@@ -4,7 +4,6 @@ import json
 import pandas as pd
 import time
 from openai import OpenAI
-from dotenv import load_dotenv
 
 # ---------------------------------------------------------------------------
 # 경로 설정 (utils import 및 CSV 저장용)
@@ -16,11 +15,11 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from utils.persona_generator import generate_balanced_personas, Persona
+from utils.llm_config import get_llm_client, TEMPERATURE
 
-# 1. API키 로드
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+# 1. LLM 클라이언트 초기화 (공통 모듈 사용)
+client, MODEL_NAME = get_llm_client()
+print(f"✅ Using model: {MODEL_NAME} (Team 1)")
 
 # =============================================================================
 # 2. Prompt 생성
@@ -61,12 +60,12 @@ You MUST respond in the following JSON format:
 def call_llm(system_prompt: str, user_prompt: str) -> dict:
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini", 
+            model=MODEL_NAME, 
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.7,
+            temperature=TEMPERATURE,
             response_format={"type": "json_object"}
         )
         return json.loads(response.choices[0].message.content)

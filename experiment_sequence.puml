@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam backgroundColor #FFFFFF
+
+title 실험 시퀀스 다이어그램: Team 1, 2, 3 비교
+
+== Team 1: Static Zero-Shot (Baseline) ==
+
+actor "Persona\n(104 agents)" as Persona1
+participant "LLM\n(gpt-4o-mini)" as LLM1
+database "Pre-trained\nKnowledge" as Knowledge
+
+Persona1 -> LLM1: **프롬프트**: 페르소나 정보만\n(외부 정보 없음)
+note right: - 게이머 유형\n- 성향(Traits)\n- 사전 지식만 사용
+LLM1 -> Knowledge: 사전 학습된 지식 참조
+Knowledge --> LLM1: 일반적인 게임 정보
+LLM1 -> Persona1: **결정**: YES/NO\n(시간에 무관, 일정한 비율)
+note right: 상관계수: NaN\n(시간에 변하지 않는 상수)
+
+== Team 2: Static RAG ==
+
+actor "Persona\n(104 agents)" as Persona2
+participant "Query\nGenerator" as QueryGen
+database "ChromaDB\n(Vector DB)" as ChromaDB2
+participant "RAG\nRetriever" as RAG2
+participant "LLM\n(gpt-4o-mini)" as LLM2
+
+loop 각 시뮬레이션 날짜 (62일)
+    loop 각 에이전트 (104명)
+        Persona2 -> QueryGen: 페르소나 기반 쿼리 생성
+        QueryGen -> RAG2: 검색 쿼리 전달
+        RAG2 -> ChromaDB2: **유사도 검색**\n(Cosine Similarity)
+        note right: - 날짜 필터링 ($lte)\n- 시간 가중치 없음\n- 상위 k개 선택
+        ChromaDB2 --> RAG2: 관련 리뷰 반환
+        RAG2 -> LLM2: **프롬프트**: 페르소나 + 리뷰 컨텍스트
+        LLM2 -> Persona2: **결정**: YES/NO\n(시간에 따라 변화)
+    end
+end
+note right: 상관계수: 계산 가능\n(시간에 따른 변화 반영)
+
+== Team 3: Time-Aware RAG ==
+
+actor "Persona\n(104 agents)" as Persona3
+participant "Query\nGenerator" as QueryGen3
+database "ChromaDB\n(Vector DB)" as ChromaDB3
+participant "Time-Aware\nRAG Retriever" as RAG3
+participant "LLM\n(gpt-4o-mini)" as LLM3
+
+loop 각 시뮬레이션 날짜 (62일)
+    loop 각 에이전트 (104명)
+        Persona3 -> QueryGen3: 페르소나 기반 쿼리 생성
+        QueryGen3 -> RAG3: 검색 쿼리 전달
+        RAG3 -> ChromaDB3: **넓은 후보 풀 검색**\n(n_results=100)
+        ChromaDB3 --> RAG3: 후보 리뷰들 반환
+        RAG3 -> RAG3: **Time Decay 계산**\nfinal_score = similarity × exp(-decay_rate × days_diff)
+        note right: - 최신 리뷰 우선\n- decay_rate = 0.01\n- 재랭킹 후 상위 5개
+        RAG3 -> LLM3: **프롬프트**: 페르소나 + 시간 가중 리뷰
+        LLM3 -> Persona3: **결정**: YES/NO\n(최신 여론 반영)
+    end
+end
+note right: 상관계수: Team 2보다 높음\n(최신 정보 우선 반영)
+
+@enduml
+

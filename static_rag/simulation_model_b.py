@@ -4,7 +4,6 @@ import json
 import pandas as pd
 import random
 from openai import OpenAI
-from dotenv import load_dotenv
 
 # 프로젝트 루트 경로 추가
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,33 +12,12 @@ sys.path.append(parent_dir)
 
 from utils.persona_generator import generate_balanced_personas, Persona
 from utils.search_queries import GAMER_TYPE_QUERIES, GENERAL_QUERY
+from utils.llm_config import get_llm_client, TEMPERATURE
 from static_rag.rag_modules import RAGRetriever
 
-# 1. API키 및 환경 설정 (LLM Configuration)
-load_dotenv()
-
-# --- LLM 설정 (Configuration) ---
-USE_OLLAMA = True # Local LLM 사용 여부
-OLLAMA_BASE_URL = "http://localhost:11434/v1"
-OLLAMA_MODEL = "qwen3:4b"
-OPENAI_MODEL = "gpt-4o-mini"
-
-if USE_OLLAMA:
-    print(f"🔹 Using Local LLM (Ollama): {OLLAMA_MODEL}")
-    client = OpenAI(
-        base_url=OLLAMA_BASE_URL,
-        api_key="ollama" # Ollama는 api_key가 필요 없지만 클라이언트 호환성을 위해 더미 값 입력
-    )
-    MODEL_NAME = OLLAMA_MODEL
-else:
-    print(f"🔸 Using OpenAI API: {OPENAI_MODEL}")
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("Warning: OPENAI_API_KEY not found in .env")
-        pass 
-    client = OpenAI(api_key=api_key)
-    MODEL_NAME = OPENAI_MODEL
-# -------------------------------
+# 1. LLM 클라이언트 초기화 (공통 모듈 사용)
+client, MODEL_NAME = get_llm_client()
+print(f"✅ Using model: {MODEL_NAME} (Team 2)")
 
 OUTPUT_FILE = "static_rag/Team2_StaticRAG_Results.csv"
 SIMULATION_DATES_FILE = "datasets/simulation_dates.csv"
@@ -85,7 +63,7 @@ def call_llm(prompt: str) -> dict:
             model=MODEL_NAME, 
             messages=[{"role": "system", "content": prompt}],
             response_format={"type": "json_object"},
-            temperature=0.5
+            temperature=TEMPERATURE
         )
         return json.loads(res.choices[0].message.content)
     except Exception as e:
@@ -155,7 +133,7 @@ def run_experiment_b_rag(n_per_type: int = 13):
             prompt = create_prompt(persona, date_str, final_docs)
             
             # 4. LLM 호출
-            print(f"   [{step_count}/{total_steps}] Agent {persona.id}...", end=" ", flush=True)
+            print(f"[{step_count}/{total_steps}] {persona.gamer_type_name_display}...", end=" ", flush=True)
             res = call_llm(prompt)
             
             decision = res.get("decision", "NO").upper()
@@ -176,7 +154,15 @@ def run_experiment_b_rag(n_per_type: int = 13):
     df = pd.DataFrame(results)
     df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
     
+    # 최종 통계 출력
+    df = pd.DataFrame(results)
+    decision_counts = df['Decision'].value_counts(normalize=True)
+    
     print("\n" + "=" * 70)
+    print("Decision")
+    print(f"NO     {decision_counts.get('NO', 0):.3f}")
+    print(f"YES    {decision_counts.get('YES', 0):.3f}")
+    print("=" * 70)
     print(f"Simulation completed. Results saved to {OUTPUT_FILE}")
     print("=" * 70)
 
