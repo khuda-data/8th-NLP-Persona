@@ -137,7 +137,7 @@ def run_experiment_b_rag(n_per_type: int = 13):
             prompt = create_prompt(persona, date_str, final_docs)
             
             # 4. LLM 호출
-            print(f"   [{step_count}/{total_steps}] Agent {persona.id}...", end=" ", flush=True)
+            print(f"[{step_count}/{total_steps}] {persona.gamer_type_name_display}...", end=" ", flush=True)
             res = call_llm(prompt)
             
             decision = res.get("decision", "NO").upper()
@@ -158,7 +158,14 @@ def run_experiment_b_rag(n_per_type: int = 13):
     df = pd.DataFrame(results)
     df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
     
+    # 최종 통계 출력
+    decision_counts = df['Decision'].value_counts(normalize=True)
+    
     print("\n" + "=" * 70)
+    print("Decision")
+    print(f"NO     {decision_counts.get('NO', 0):.3f}")
+    print(f"YES    {decision_counts.get('YES', 0):.3f}")
+    print("=" * 70)
     print(f"Simulation completed. Results saved to {OUTPUT_FILE}")
     print("=" * 70)
 
