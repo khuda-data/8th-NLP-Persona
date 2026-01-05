@@ -1,36 +1,50 @@
+# --- Secrets & Environment (보안) ---
 .env
 secrets.json
-
-Cyberpunk_2077_Steam_Reviews.csv
-Cyberpunk_2077_Steam_Reviews.xlsx
-cyberpunk_reviews.zip
-
-logs/
-*.out
-*.err
-
-__pycache__/
-*.pyc
-.ipynb_checkpoints/
-.DS_Store
-
 venv/
 env/
 .venv/
 prompt_lab/
-archive/
+
+# --- Logs & Slurm Outputs (로그) ---
+logs/
 *.log
+*.out
+*.err
 team*_run.log
 team*_async.log
 team*_experiment.log
 experiment.log
 
+# --- Python Cache (파이썬 자동 생성) ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# --- OS & IDE Junk (운영체제/에디터 쓰레기 파일) ---
+.DS_Store
+__MACOSX/
+._*
+.vscode/
+
+# --- Large Data Files (데이터셋 - 용량 큼) ---
+Cyberpunk_2077_Steam_Reviews.csv
+Cyberpunk_2077_Steam_Reviews.xlsx
+# 모든 zip 파일 무시 (chroma_db.zip 등 포함)
+*.zip
+
+# --- Specific Dataset Folders ---
 datasets/chroma_db/
 datasets/reviews/
 datasets/chroma_db_backup_*/
-
 models/
+archive/
 
+# --- Scripts & Temp Files (스크립트) ---
+# 실행 스크립트 무시
+*.sh
+# 임시 확인용 파이썬 파일 무시
+check_freeze.py
 .vscode/
 
 # Ignore CSV results in team folders
