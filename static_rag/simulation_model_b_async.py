@@ -25,9 +25,6 @@ from static_rag.rag_modules import RAGRetriever
 # 병렬 토크나이저 경고 억제
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-# 병렬 토크나이저 경고 억제
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
 # Async OpenAI 클라이언트 초기화
 def get_async_llm_client():
     """비동기 LLM 클라이언트 반환"""
